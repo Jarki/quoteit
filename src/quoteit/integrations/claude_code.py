@@ -17,6 +17,7 @@ import os
 import re
 import select
 import shutil
+import signal
 import struct
 import subprocess
 import sys
@@ -255,9 +256,12 @@ def _run_pty(
                 break
     finally:
         try:
-            proc.kill()
-        except ProcessLookupError:
-            pass
+            os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except (ProcessLookupError, OSError):
+            try:
+                proc.kill()
+            except ProcessLookupError:
+                pass
         try:
             os.close(master_fd)
         except OSError:
